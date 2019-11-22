@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div id="traffic-light" class="demo"></div>
+</body>
+
+
+<style>
+    .demo{
+        height: 200px;
+        width: 200px;
+        background: red;
+    }
+</style>
+
+<script>
+    function sleep(duration){
+        return new Promise(function(resolve){
+            setTimeout(resolve, duration);
+        })
+    }
+    async function changeColor(duration,color){
+        document.getElementById("traffic-light").style.background = color;
+        await sleep(duration);
+    }
+    async function main(){
+        while(true){
+            await changeColor(3000,"green");
+            await changeColor(1000, "yellow");
+            await changeColor(2000, "red");
+        }
+    }
+    main();
+</script>
+</html>
