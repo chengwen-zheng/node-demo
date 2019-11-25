@@ -1,17 +1,23 @@
 const net = require('net');
 
 
-const server = net.createServer((socket)=>{
-  socket.on('data',(buffer)=>{
-    const lessonid = buffer.readInt32BE();
-    console.log(lessonid)
-    setTimeout(()=>{
-      socket.write(Buffer.from(data[lessonid]));
-    },1000)
+const server = net.createServer((socket) => {
+  socket.on('data', (buffer) => {
+    const seqBuffer = buffer.slice(0, 2);
+    const lessonid = buffer.slice(2).readInt32BE();
+
+    // console.log(lessonid);
+
+    setTimeout(() => {
+      socket.write(Buffer.concat([
+        seqBuffer,
+        Buffer.from(data[lessonid])
+      ]));
+    }, 10 + Math.random() * 1000)
   })
 });
-server.listen(4000);
 
+server.listen(4000);
 
 const data = {
   136797: "01 | 课程介绍",

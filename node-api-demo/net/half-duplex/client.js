@@ -30,17 +30,20 @@ socket.connect({
 })
 
 let lessonid = lessonids[Math.floor(Math.random() * lessonids.length)];
-console.log(lessonid)
 socket.write(encode(lessonid));
 
 // 接收返回的数据
 socket.on('data',(buffer)=>{
   console.log(buffer.toString());
+
+  // 不停的发送请求
+  let lessonid = lessonids[Math.floor(Math.random() * lessonids.length)];
+  socket.write(encode(lessonid));
 })
 
 
 function encode(id){
   let lessonidBuf = Buffer.alloc(4);
-  lessonidBuf.writeInt32BE(lessonid);
+  lessonidBuf.writeInt32BE(id);
   return lessonidBuf;
 }
