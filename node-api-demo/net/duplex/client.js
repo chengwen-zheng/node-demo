@@ -3,56 +3,95 @@ const socket = new net.Socket({});
 
 
 const lessonids = [
-  "136797",
-  "136798",
-  "136799",
-  "136800",
-  "136801",
-  "136803",
-  "136804",
-  "136806",
-  "136807",
-  "136808",
-  "136809",
-  "141994",
-  "143517",
-  "143557",
-  "143564",
-  "143644",
-  "146470",
-  "146569",
-  "146582"
+    "136797",
+    "136798",
+    "136799",
+    "136800",
+    "136801",
+    "136803",
+    "136804",
+    "136806",
+    "136807",
+    "136808",
+    "136809",
+    "141994",
+    "143517",
+    "143557",
+    "143564",
+    "143644",
+    "146470",
+    "146569",
+    "146582"
 ]
 
 socket.connect({
-  host: '127.0.0.1',
-  port: 4000
+    host: '127.0.0.1',
+    port: 4000
 });
 
 let seq = 0;
 
-let lessonid = lessonids[Math.floor(Math.random() * lessonids.length)];
-socket.write(encode(lessonid));
-  
+
 // 接收返回的数据
+let oldBuffer = null;
 socket.on('data', (buffer) => {
-  console.log(buffer.slice(0, 2).readInt16BE(), buffer.slice(2).toString());
+    if (oldBuffer) {
+        buffer = Buffer.concat([oldBuffer, buffer]);
+    }
+    let completeLength = 0;
+    while (completeLength = checkComplete(buffer)) {
+        const package = buffer.slice(0, completeLength);
+        buffer = buffer.slice(completeLength);
+
+        const result = decode(package);
+        console.log(`包${result.seq}，返回值是${result.data}`);
+
+    }
+    // 把残余的buffer记下来
+    oldBuffer = buffer;
+
 })
 
 
-function encode(id) {
-  let bodyBuf = Buffer.alloc(4);
-  bodyBuf.writeInt32BE(id);
+/**
+ * 二进制包编码函数
+ * 在一段rpc调用里，客户端需要经常编码rpc调用时，业务数据的请求包
+ */
+function encode(data) {
+    // 正常情况下，这里应该是使用 protobuf 来encode一段代表业务数据的数据包
+    // 为了不要混淆重点，这个例子比较简单，就直接把课程id转buffer发送
+    const body = Buffer.alloc(4);
+    body.writeInt32BE(lessonids[data.id]);
 
-  let headerBuf = Buffer.alloc(2);
-  headerBuf.writeInt16BE(seq);
+    // 一般来说，一个rpc调用的数据包会分为定长的包头和不定长的包体两部分
+    // 包头的作用就是用来记载包的序号和包的长度，以实现全双工通信
+    const header = Buffer.alloc(6);
+    header.writeInt16BE(seq)
+    header.writeInt32BE(body.length, 2);
 
-  console.log(id, seq);
-  let lessonidBuf = Buffer.concat([headerBuf, bodyBuf]);
-  seq++;
-  return lessonidBuf;
+    // 包头和包体拼起来发送
+    const buffer = Buffer.concat([header, body])
+
+    console.log(`包${seq}传输的课程id为${lessonids[data.id]}`);
+    seq++;
+    return buffer;
 }
 
+/**
+ * 二进制包解码函数
+ * 在一段rpc调用里，客户端需要经常解码rpc调用时，业务数据的返回包
+ */
+function decode(buffer) {
+    const header = buffer.slice(0, 6);
+    const seq = header.readInt16BE();
+
+    const body = buffer.slice(6)
+
+    return {
+        seq,
+        data: body.toString()
+    }
+}
 
 // setInterval(()=>{
 //   模拟不停的发送请求,并且时间间隔不同。
@@ -61,7 +100,22 @@ function encode(id) {
 // },10 + Math.random() * 1000);
 
 
+/**
+ * 检查一段buffer是不是一个完整的数据包。
+ * 具体逻辑是：判断header的bodyLength字段，看看这段buffer是不是长于header和body的总长
+ * 如果是，则返回这个包长，意味着这个请求包是完整的。
+ * 如果不是，则返回0，意味着包还没接收完
+ * @param {} buffer
+ */
+function checkComplete(buffer) {
+    if (buffer.length < 6) {
+        return 0;
+    }
+    const bodyLength = buffer.readInt32BE(2);
+    return 6 + bodyLength
+}
+
 for (let k = 0; k < 100; k++) {
-  let lessonid = lessonids[Math.floor(Math.random() * lessonids.length)];
-  socket.write(encode(lessonid));
+    let lessonid = Math.floor(Math.random() * lessonids.length);
+    socket.write(encode({id: lessonid}));
 }
