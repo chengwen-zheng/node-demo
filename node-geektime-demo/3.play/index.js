@@ -25,9 +25,9 @@ app.use(
     })
 )
 
-// module.exports = app;
+module.exports = app;
 
-app.listen(3000,(err)=>{
-    if(err) console.log(err);
-    console.log('监听3000端口')
-})
+// app.listen(3000,(err)=>{
+//     if(err) console.log(err);
+//     console.log('监听3000端口')
+// })
