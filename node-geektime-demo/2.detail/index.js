@@ -25,9 +25,14 @@ app.use(async (ctx) => {
     })
 
     ctx.status = 200;
-    
-    ctx.body = detailTemplate(result);
+
+    const html = detailTemplate(result);
+    ctx.body = html;
+    // 模拟内存泄露
+    // leak.push(html);
 })
+
+    // const leak = [];
 
 // app.listen(3000)
 
