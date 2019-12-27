@@ -17,7 +17,6 @@ server
         // 因为都是假数据，这里就没有使用栏目id。真实项目会拿这个columnid去请求数据库
         const columnid = request.body;
 
-        console.log(columnData[0])
         // 直接返回假数据
         response.end({
             column: columnData[0],

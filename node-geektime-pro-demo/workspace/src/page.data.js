@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 module.exports = {
     column: {
         protocol: 'geek-rpc',
@@ -8,7 +6,7 @@ module.exports = {
 
         port: 4000,
 
-        protobufFile: fs.readFileSync(__dirname + '/proto/detail.proto'),
+        protobufFile: require(__dirname + '/proto/detail.proto'),
 
         requestStruct: 'ColumnRequest',
         responseStruct: 'ColumnResponse',

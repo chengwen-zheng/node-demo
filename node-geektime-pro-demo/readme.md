@@ -6,6 +6,7 @@
     * backend 后端服务内容
     * business 业务配置中心，模拟云函数架构存储函数内容的地方
     * server 服务端运行逻辑
+    * workspace 模拟开发者工作空间
         
 * 更新条目
     server code: 本次提交为服务端代码(拆分基本完成)

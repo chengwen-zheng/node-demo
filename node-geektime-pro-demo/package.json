@@ -2,7 +2,7 @@
   "name": "geektime-pro-demo",
   "version": "1.0.0",
   "description": "",
-  "main": "test.js",
+  "main": "server/test.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +12,10 @@
     "easy_sock": "^0.3.8",
     "protocol-buffers": "^4.1.0",
     "request": "^2.88.0",
-    "requests": "^0.3.0"
+    "requests": "^0.3.0",
+    "webpack": "^4.41.4"
+  },
+  "devDependencies": {
+    "text-loader": "0.0.1"
   }
 }
