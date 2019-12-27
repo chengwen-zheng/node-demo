@@ -1,0 +1,17 @@
+{
+  "name": "geektime-pro-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "easy_sock": "^0.3.8",
+    "protocol-buffers": "^4.1.0",
+    "request": "^2.88.0",
+    "requests": "^0.3.0"
+  }
+}
