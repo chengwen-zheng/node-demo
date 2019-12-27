@@ -17,7 +17,7 @@ module.exports = {
             return res.column;
         }
     },
-        articleList: {
+    articleList: {
         protocol: 'http',
 
         url: 'http://127.0.0.1:4003',

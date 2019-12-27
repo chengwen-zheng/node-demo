@@ -17,9 +17,9 @@ function factory(config) {
             return Promise.resolve(null);
         }
         return requestors[config.protocol]
-                .request(data)
-                .then(config.then)
-                .catch(config.catch)
+            .request(data)
+            .then(config.then)
+            .catch(config.catch)
     }
 }
 

@@ -14,12 +14,12 @@ let columnRequest = requestFactory(config.column);
 
 
 articleRequest().then(function (data) {
-   console.log(data);
-}).catch((err)=>{
-   console.error((err));
+    console.log(data);
+}).catch((err) => {
+    console.error((err));
 })
 columnRequest({columnid: 1}).then(function (data) {
     console.log(data);
-}).catch((err)=>{
+}).catch((err) => {
     console.error((err));
 })

@@ -2,7 +2,9 @@ const request = require('request');
 
 let url = '';
 module.exports = {
-    compile: function (config) { url = config.url },
+    compile: function (config) {
+        url = config.url
+    },
     request: async function (data) {
 
         return await new Promise((resolve, reject) => {
