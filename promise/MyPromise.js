@@ -146,7 +146,7 @@ class Promise {
         });
     }
 
-    constructor(fn) {
+    constructor(executor) {
         this.status = PENDING;
         this.value = undefined;
         this.reason = undefined;
@@ -154,7 +154,7 @@ class Promise {
         this.onFulfilledList = [];
         this.onRejectedList = [];
         try {
-            fn(this.handleResolve.bind(this), this.handleReject.bind(this));
+            executor(this.handleResolve.bind(this), this.handleReject.bind(this));
         } catch (e) {
             this.handleReject(e);
         }
