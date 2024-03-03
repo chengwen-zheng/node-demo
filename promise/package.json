@@ -1,0 +1,15 @@
+{
+  "name": "promise-starter",
+  "version": "1.0.0",
+  "description": "1. MyPromise.js是Promise一个实现。 2. 执行测试用例",
+  "main": "MyPromise.js",
+  "scripts": {
+    "test": "promises-aplus-tests MyPromise.js  --reporter spec"
+
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}
