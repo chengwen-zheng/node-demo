@@ -64,13 +64,16 @@ class Promise {
             return Promise.resolve(result);
         }
         return new Promise((resolve, reject) => {
-            Promise.resolve(promise).then((res) => {
-                count--;
-                result[i] = res;
-                if (count === 0) {
-                    resolve(result);
-                }
-            }, reject);
+            arr.forEach((promise) => {
+                Promise.resolve(promise).then((res) => {
+                    count--;
+                    result[i] = res;
+                    if (count === 0) {
+                        resolve(result);
+                    }
+                }, reject);
+            });
+            
         });
     }
 
