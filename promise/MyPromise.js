@@ -2,150 +2,36 @@ const PENDING = 'pending';
 const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 const isInBrowser = typeof window !== 'undefined';
-class Promise {
+
+const microTaskQuene =
+	typeof queueMicrotask === 'function'
+		? queueMicrotask
+		: typeof Promise === 'function'
+		? (callback) => Promise.resolve(null).then(callback)
+		: setTimeout;
+
+class MyPromise {
     static isPromise(val) {
         return val && val instanceof Promise;
     }
 
-    static resolve(val) {
-        if (Promise.isPromise(val)) {
-            return val;
+    static resolve(x) {
+        if (MyPromise.isPromise(x)) {
+            return x;
         }
-        return new Promise((resolve) => {
-            if (val && typeof val.then === 'function') { // 如果返回值是个thenable对象，需要处理下
-                val.then((res) => {
-                    resolve(res);
-                });
+        return new MyPromise((resolve) => {
+            // thenable
+            if (x && typeof x.then === 'function') {
+                x.then((res) => resolve(res));
                 return;
             }
-            resolve(val);
+            resolve(x);
         });
     }
 
-    static reject(val) {
-        //reject不区分是不是Promise
-        return new Promise((_, reject) => {
-            reject(val);
-        });
-    }
-
-    /**
-     * 用MutationObserver生成浏览器的nextTick，nodejs端则用process.nextTick
-     */
-    static nextTick(nextTickHandler) {
-        if (isInBrowser) {
-            if (typeof MutationObserver !== 'undefined') { // 首选 MutationObserver 
-                var counter = 1;
-                var observer = new MutationObserver(nextTickHandler); // 声明 MO 和回调函数
-                var textNode = document.createTextNode(counter);
-                observer.observe(textNode, { // 监听 textNode 这个文本节点
-                    characterData: true // 一旦文本改变则触发回调函数 nextTickHandler
-                });
-                const start = function () {
-                    counter = (counter + 1) % 2; // 每次执行 timeFunc 都会让文本在 1 和 0 间切换
-                    textNode.data = counter;
-                };
-                start();
-            } else {
-                setTimeout(nextTickHandler, 0);
-            }
-        } else {
-            process.nextTick(nextTickHandler);
-        }
-    }
-
-    static all(arr) {
-        if (!Array.isArray(arr)) {
-            throw new TypeError('undefined is not iterable.');
-        }
-        let count = arr.length;
-        const result = [];
-        if (count === 0) {
-            return Promise.resolve(result);
-        }
-        return new Promise((resolve, reject) => {
-            arr.forEach((promise) => {
-                Promise.resolve(promise).then((res) => {
-                    count--;
-                    result[i] = res;
-                    if (count === 0) {
-                        resolve(result);
-                    }
-                }, reject);
-            });
-            
-        });
-    }
-
-    static allSettled(arr) {
-        if (!Array.isArray(arr)) {
-            throw new TypeError('undefined is not iterable.');
-        }
-        let count = arr.length;
-        const result = [];
-        if (count === 0) {
-            return Promise.resolve(result);
-        }
-        return new Promise((resolve) => {
-            arr.forEach((promise, i) => {
-                Promise.resolve(promise).then((res) => {
-                    count--;
-                    result[i] = {
-                        value: res,
-                        status: FULFILLED
-                    };
-                    if (count === 0) {
-                        resolve(result);
-                    }
-                }, (err) => {
-                    count--;
-                    result[i] = {
-                        reason: err,
-                        status: REJECTED
-                    };
-                    if (count === 0) {
-                        resolve(result);
-                    }
-                });
-            });
-        });
-    }
-
-    static race(arr) {
-        if (!Array.isArray(arr)) {
-            throw new TypeError('undefined is not iterable.');
-        }
-        let count = arr.length;
-        if (count === 0) {
-            return new Promise(() => { }); //返回一个永远pending的promise，这是跟all等不一样的地方
-        }
-        return new Promise((resolve, reject) => {
-            arr.forEach((promise) => {
-                Promise.resolve(promise).then(resolve, reject);
-            });
-        });
-    }
-
-    static deferred() {
-        let result = {};
-        result.promise = new Promise((resolve, reject) => {
-            result.resolve = resolve;
-            result.reject = reject;
-        });
-        return result;
-    }
-
-    /**
-     * 先执行同步代码，替代Promise.resolve().then(func)
-     * @example 
-     * 
-     * const f = () => console.log('now');
-     * Promise.try(f);
-     * console.log('next');
-     */
-    static try(func){
-        return new Promise((resolve) => {
-            resolve(func());
+    static reject(r) {
+        return new MyPromise((resolve, reject) => {
+            reject(r);
         });
     }
 
@@ -153,40 +39,103 @@ class Promise {
         this.status = PENDING;
         this.value = undefined;
         this.reason = undefined;
-
         this.onFulfilledList = [];
         this.onRejectedList = [];
         try {
-            executor(this.handleResolve.bind(this), this.handleReject.bind(this));
+            executor(this.handleResolve.bind(this), this.handleReject.bind(this))
         } catch (e) {
             this.handleReject(e);
         }
     }
 
-    /**
-     * 处理成功
-     * 就是我们使用的resolve函数
-     * @param val 成功参数
-     */
-    handleResolve(val) {
-        if (this.status !== PENDING) {
-            return;
+    // all方法返回一个promise，所有的都resolve，才返回resolve(result),将第一个reject作为外层的reject
+    static all(array) {
+        if (!Array.isArray(array)) {
+            throw new TypeError(`${array} is not array`);
         }
+        let count = array.length;
+        let result = [];
+        if (count === 0) {
+            return MyPromise.resolve(result);
+        }
+        return new MyPromise((resolve, reject) => {
+            array.forEach((promise, index) => {
+                // promise可以为非promise
+                MyPromise.resolve(promise).then((res) => {
+                    result[index] = res;
+                    if (--count === 0) {
+                        resolve(result);
+                    }
+                }, reject);
+            });
+        });
+
+    }
+
+    // race方法返回第一个敲定的resolve和reject
+    static race(array) {
+        if (!Array.isArray(array)) {
+            throw new TypeError(`${array} is not array`);
+        }
+        let count = array.length;
+
+        if (count === 0) {
+            return new MyPromise(() => { });
+        }
+        return new MyPromise((resolve, reject) => {
+            array.forEach((promise) => {
+                // promise可以为非promise
+                MyPromise.resolve(promise).then(resolve, reject)
+            });
+        })
+    }
+
+
+    static allSettled(array) {
+        if (!Array.isArray(array)) {
+           throw new TypeError(`${array} is not array`);
+        }
+        let count = array.length;
+        let result = [];
+        if (count === 0) {
+            return MyPromise.resolve(result);
+        }
+        return new MyPromise((resolve, reject) => {
+            array.forEach((promise, index) => {
+                // promise可以为非promise
+                MyPromise.resolve(promise).then((res) => {
+                    result[index] = {
+                        value: res,
+                        status: FULFILLED
+                    }
+
+                    if (--count === 0) {
+                        resolve(result);
+                    }
+                }, (reason) => {
+                    result[index] = {
+                        reason,
+                        status: REJECTED
+                    }
+
+                    if (--count === 0) {
+                        resolve(result);
+                    }
+                });
+            });
+        });
+    }
+
+    handleResolve(val) {
+        if (this.status != PENDING) return;
         this.status = FULFILLED;
         this.value = val;
         this.onFulfilledList.forEach((cb) => cb && cb.call(this, val));
         this.onFulfilledList = [];
     }
 
-    /**
-     * 处理失败
-     * 就是我们使用的reject函数
-     * @param err 失败信息
-     */
     handleReject(err) {
-        if (this.status !== PENDING) {
-            return;
-        }
+        if (this.status != PENDING) return;
         this.status = REJECTED;
         this.reason = err;
         this.onRejectedList.forEach((cb) => cb && cb.call(this, err));
@@ -236,7 +185,7 @@ class Promise {
             };
 
             const onResolvedFunc = function (val) {
-                var cb = function () {
+                microTaskQuene(function () {
                     try {
                         if (typeof onFulfilled !== 'function') { // 如果成功了，它不是个函数，意味着不能处理，则把当前Promise的状态继续向后传递
                             resolve(val);
@@ -247,12 +196,12 @@ class Promise {
                     } catch (e) {
                         reject(e);
                     }
-                };
-                Promise.nextTick(cb);
+                });
+                
             };
 
             const onRejectedFunc = function (val) {
-                var cb = function () {
+                microTaskQuene(function () {
                     try {
                         if (typeof onRejected !== 'function') { // 如果失败了，它不是个函数，意味着不能处理，则把当前Promise的状态继续向后传递
                             reject(val);
@@ -263,8 +212,7 @@ class Promise {
                     } catch (e) {
                         reject(e);
                     }
-                };
-                Promise.nextTick(cb);
+                });
             };
 
             if (this.status === PENDING) {
@@ -281,14 +229,52 @@ class Promise {
         return promise2;
     }
 
-    catch(onRejected) {
-        return this.then(null, onRejected);
+    toString() {
+        return '[object MyPromise]';
+    }
+
+    // static withResolvers() {
+    //     let resolve, reject;
+    //     const promise = new MyPromise((resolve, reject) => {
+    //         resolve = resolve;
+    //         reject = reject
+    //     });
+
+    //     return {
+    //         promise, resolve, reject
+    //     };
+    // }
+    static deferred() {
+        let result = {};
+        result.promise = new MyPromise((resolve, reject) => {
+            result.resolve = resolve;
+            result.reject = reject;
+        });
+        return result;
+    }
+
+    /**
+     * 先执行同步代码，替代Promise.resolve().then(func)
+     * @example 
+     * 
+     * const f = () => console.log('now');
+     * MyPromise.try(f);
+     * console.log('next');
+     */
+    static try(func) {
+        return new MyPromise((resolve) => {
+            resolve(func());
+        });
+    }
+
+    catch(onReject) {
+        return this.then(null, onReject);
     }
 
     finally(callback) {
         return this.then(
-            (val) => Promise.resolve(callback()).then(() => val),
-            (err) => Promise.resolve(callback()).then(() => { throw err })
+            (val) => MyPromise.resolve(callback()).then(() => val),
+            (err) => MyPromise.resolve(callback()).then(() => { throw err })
         );
     }
 
@@ -301,10 +287,6 @@ class Promise {
                 }, 0);
             });
     }
-
-    toString() {
-        return '[object Promise]';
-    }
 }
 
-module.exports = Promise;
+module.exports = MyPromise;
