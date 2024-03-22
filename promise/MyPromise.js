@@ -143,7 +143,7 @@ class MyPromise {
     }
 
     then(onFulfilled, onRejected) {
-        const promise2 = new Promise((resolve, reject) => {
+        const promise2 = new MyPromise((resolve, reject) => {
             const resolvePromise = function (x) {
                 if (x === promise2) {
                     reject(new TypeError('The promise and the return value are the same'));
