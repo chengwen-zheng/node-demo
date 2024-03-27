@@ -2,7 +2,7 @@
 const app = {
     middleware: [],
     callback(ctx) {
-        console.log(ctx);
+        console.log(ctx, 999999);
     },
 
     use(fn) {
@@ -12,7 +12,7 @@ const app = {
 
     go(ctx) {
         /* TODO */
-        const reducer = (next, fn, i) => () => fn(ctx, next);
+        const reducer = (next, fn) => () => fn(ctx, next);
         this.middleware.reduceRight(reducer, this.callback.bind(this, ctx))();
     }
 }
@@ -21,12 +21,16 @@ app.use((ctx, next) => {
     console.log("第一");
     ctx.name = 'Lucy';
     next();
+    console.log("第一一");
+
 })
 
 app.use((ctx, next) => {
     console.log("第二");
     ctx.age = 12;
     next();
+    console.log("第二二");
+
 })
 
 app.use((ctx, next) => {
