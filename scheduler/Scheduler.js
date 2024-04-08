@@ -1,27 +1,25 @@
 class Scheduler {
+    static max = 2;
     constructor() {
         this.queues = [];
-        this.max = 2;
         this.cur = 0;
     }
 
-    add(promiseCreator) {
+    async add(promiseCreator) {
         let temp = null;
-
-        if (this.cur < this.max) {
-            temp = promiseCreator()
+        if (this.cur < Scheduler.max) {
+            temp = promiseCreator().then(()=> {
+                this.cur--;
+            });
+            this.cur++;
         } else {
-            let arr = this.queues.slice(0, this.cur - 1);
-            let all = Promise.all(arr);
-
-            // Promise.reace 一个待定的 Promise 只要给定的迭代中的一个promise解决或拒绝，就采用第一个promise的值作为它的值，从而异步地解析或拒绝（一旦堆栈为空）
-            temp = Promise.race([all, this.queues[this.cur - 1]]).then(() => {
-                return promiseCreator();
-            })
+            temp = Promise.race(this.queues).finally(() => {
+                this.cur--;
+                return promiseCreator()
+            });
         }
+        
         this.queues.push(temp);
-        this.cur++;
-        return temp;
     }
 }
 

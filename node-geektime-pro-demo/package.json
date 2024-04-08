@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "easy_sock": "^0.3.8",
+    "koa": "^2.15.2",
+    "koa-mount": "^4.0.0",
     "protocol-buffers": "^4.1.0",
     "request": "^2.88.0",
     "requests": "^0.3.0",
