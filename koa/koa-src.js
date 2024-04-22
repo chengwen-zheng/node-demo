@@ -1,7 +1,6 @@
 class Koa {
   middleware = [];
   static compose(middleware) {
-    debugger
     return function (context, next) {
       let index = -1;
       return dispatch(0);
